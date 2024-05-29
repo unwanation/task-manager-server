@@ -1,6 +1,6 @@
 import uvicorn
 
-import db.schemas
+import db
 
 
 def main():

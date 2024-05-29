@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
+import ai
 import db.queries.space
 import db.queries.task
 import db.queries.user
@@ -19,18 +20,32 @@ async def get_task(task_id, user: User = Depends(get_current_user)) -> Task:
 
 
 @router.post("/task/new")
-async def create_task(
-    task_model: TaskModel, space_id: int, user: User = Depends(get_current_user)
-):
+def create_task(user_input: str, space_id: int, user: User = Depends(get_current_user)):
     if not db.queries.space.is_owner(space_id, user.uuid):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-    return db.queries.task.create(
-        task_model.name,
-        task_model.priority,
-        task_model.status,
-        task_model.deadline,
-        space_id,
-    )
+
+    try:
+        tasks = ai.ai_parse(user_input)
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid input for ai parse"
+        )
+
+    for task in tasks.tasks:
+        db.queries.task.create(
+            task.name,
+            task.priority,
+            False,
+            task.deadline,
+            space_id,
+        )
+
+
+@router.delete("/task/delete")
+async def delete_task(task_id: int, user: User = Depends(get_current_user)):
+    if not db.queries.task.is_owner(task_id, user.uuid):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    db.queries.task.remove(task_id)
 
 
 @router.post("/task/edit")

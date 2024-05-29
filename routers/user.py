@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 
+import db.queries.space
 import db.queries.user
 from db.schemas import User, Space
 from deps import get_current_user
@@ -21,16 +22,21 @@ router = APIRouter()
 
 
 @router.post("/user/register")
-async def register(register_model: RegisterModel) -> str:
+async def register(register_model: RegisterModel):
     if not db.queries.user.is_not_exist(register_model):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
         )
 
-    return db.queries.user.create(
+    uuid = db.queries.user.create(
         register_model.name,
         register_model.email,
         get_hashed_password(register_model.password),
+    )
+    db.queries.space.create(
+        register_model.name,
+        1,
+        uuid,
     )
 
 

@@ -12,13 +12,14 @@ ORIGINS = [
     "http://127.0.0.0:5000",
     "http://localhost:3000",
     "http://localhost:5500",
+    "http://localhost:58275",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ORIGINS,
     allow_credentials=True,
-    allow_methods=["post", "get"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
